@@ -38,7 +38,7 @@ var server = http.createServer(function(req,res){
 			'headers' : headers,
 			'payloads' : buffer
 			}
-		chosenHandler(data,function(statusCode,payload){
+		chosenHandler(data,function(data, statusCode,payload){
 			statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
 			payload = typeof(payload) == 'object' ? payload : {};
 		var payloadString = JSON.stringify(payload);
@@ -46,7 +46,6 @@ var server = http.createServer(function(req,res){
 		res.writeHead(statusCode);
 		res.end(payloadString);	
 		console.log('Returing these response:' ,statusCode,payloadString);
- 
 
 		});
 //HTTP method
@@ -63,14 +62,14 @@ var server = http.createServer(function(req,res){
 //request router
 	var handlers = {};
 	handlers.sample = function(data,callback){
-		callback(406,{'name':'samplehandlers'});
+		callback(data, 406,{'message':'hello'});
 	};
 	handlers.notFound = function(data,callback){
 		callback(404);
 	};
 
 	handlers.hello = function(data,callback) {
-       callback(406,{'name':'please take care of the address samples you pass through the address bar even a spelling or space can ruin your precious time'});
+       callback(406,{'message':'welcome'});
 	};
 	var router = {
 		'sample':handlers.sample,
