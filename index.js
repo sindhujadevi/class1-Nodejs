@@ -6,20 +6,21 @@
 // Dependencies
 var http = require('http');
 var url = require('url');
-var StringDecoder = require('string-decoder').StringDecoder;
+var StringDecoder = require('string_decoder').StringDecoder;
 var config = require('./config');
 
-//server//
+//server
 var server = http.createServer(function(req,res){
 
 		var parsedUrl = url.parse(req.url,true);
 		var path = parsedUrl.pathname;
 		var trimmedPath = path.replace(/^\/+|\/+$/g,'');
-//query string as an object//
+		var method = req.method.toLowerCase();
+//query string as an object
 		var queryStringObject = parsedUrl.query;
-//Headers//
+//Headers
 		var headers = req.headers;
-//payloads//
+//payloads
 		var decoder = new StringDecoder('utf-8');
 		var buffer = '';
 		req.on('data',function(data){
@@ -28,15 +29,55 @@ var server = http.createServer(function(req,res){
 		
 		req.on('end',function(){
 			buffer +=decoder.end();
-//HTTP method//
-		var method = req.method.toLowerCase();
-		
-		res.end('Hello World\n');
-		console.log('Request recieved with these headers:' ,headers);
-		
+		//chosenhandler
+		var chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath]: handlers.notFound;
+		var data = {
+			'trimmedPath' : trimmedPath,
+			'queryStringObject' : queryStringObject,
+			'method' : method,
+			'headers' : headers,
+			'payloads' : buffer
+			}
+		chosenHandler(data,function(statusCode,payload){
+			statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
+			payload = typeof(payload) == 'object' ? payload : {};
+		var payloadString = JSON.stringify(payload);
+		res.setHeader('Content-Type','application/json');
+		res.writeHead(statusCode);
+		res.end(payloadString);	
+		console.log('Returing these response:' ,statusCode,payloadString);
+ 
 
-		/*console.log('Request recieved on path:'+trimmedPath+'with method:'+method+'with these query string parameters',queryStringObject);*/
-});
-server.listen(250,function(){
-	console.log("The server is listening on port 250 now");
+		});
+//HTTP method
+
+/*var method = req.method.toLowerCase();*/
+		
+		/*res.end('Hello World\n');*/
+/*console.log('Request recieved with these headers:' ,headers);*/
+		/*console.log('Request recieved with this payloads:' ,buffer);*/
+
+   });
+
+});	
+//request router
+	var handlers = {};
+	handlers.sample = function(data,callback){
+		callback(406,{'name':'samplehandlers'});
+	};
+	handlers.notFound = function(data,callback){
+		callback(404);
+	};
+
+	handlers.hello = function(data,callback) {
+       callback(406,{'name':'please take care of the address samples you pass through the address bar even a spelling or space can ruin your precious time'});
+	};
+	var router = {
+		'sample':handlers.sample,
+		'hello' :handlers.hello
+	};
+
+/*console.log('Request recieved on path:'+trimmedPath+'with method:'+method+'with these query string parameters',queryStringObject);*/
+server.listen(8000,function(){
+	console.log("The server is listening on port 8000 now");
 });
